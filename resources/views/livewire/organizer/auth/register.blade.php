@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use App\Models\Artist;
+use App\Models\Organizer;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -18,24 +18,21 @@ new #[Layout('components.layouts.auth')] class extends Component {
     public string $email = '';
     public string $password = '';
     public string $password_confirmation = '';
-    public string $stage_name = '';
-    public string $gender = '';
-    public string $nationality = '';
+    public string $organization_name = '';
+    public string $organization_type = '';
+    public string $phone_number = '';
     public string $address = '';
-    public string $NIN_number = '';
-    public $NIN_front_image;
-    public $NIN_back_image;
+    public string $business_registration = '';
+    public $business_registration_doc;
     public string $bio = '';
     public $profile_photo;
     public array $social_media_links = [];
-    public array $music_links = [];
     public bool $terms = false;
     public int $step = 1;
 
     public function mount()
     {
         $this->social_media_links = [['platform' => '', 'url' => '']];
-        $this->music_links = [['platform' => '', 'url' => '']];
     }
 
     public function addSocialMediaLink()
@@ -49,30 +46,18 @@ new #[Layout('components.layouts.auth')] class extends Component {
         $this->social_media_links = array_values($this->social_media_links);
     }
 
-    public function addMusicLink()
-    {
-        $this->music_links[] = ['platform' => '', 'url' => ''];
-    }
-
-    public function removeMusicLink($index)
-    {
-        unset($this->music_links[$index]);
-        $this->music_links = array_values($this->music_links);
-    }
-
     public function validateStep()
     {
         if ($this->step === 1) {
             $this->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'max:255'],
-                'stage_name' => ['required', 'string', 'max:255'],
-                'gender' => ['required', 'string'],
-                'nationality' => ['required', 'string'],
+                'organization_name' => ['required', 'string', 'max:255'],
+                'organization_type' => ['required', 'string'],
+                'phone_number' => ['required', 'string'],
                 'address' => ['required', 'string'],
-                'NIN_number' => ['required', 'string', 'unique:artists'],
-                'NIN_front_image' => ['required', 'image', 'max:1024'],
-                'NIN_back_image' => ['required', 'image', 'max:1024'],
+                'business_registration' => ['required', 'string', 'unique:organizers'],
+                'business_registration_doc' => ['required', 'file', 'max:1024'],
             ]);
         } elseif ($this->step === 2) {
             $this->validate([
@@ -102,9 +87,6 @@ new #[Layout('components.layouts.auth')] class extends Component {
         $this->step--;
     }
 
-    /**
-     * Handle an incoming registration request.
-     */
     public function register(): void
     {
         try {
@@ -113,13 +95,12 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 'name' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'max:255'],
                 'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
-                'stage_name' => ['required', 'string', 'max:255'],
-                'gender' => ['required', 'string'],
-                'nationality' => ['required', 'string'],
+                'organization_name' => ['required', 'string', 'max:255'],
+                'organization_type' => ['required', 'string'],
+                'phone_number' => ['required', 'string'],
                 'address' => ['required', 'string'],
-                'NIN_number' => ['required', 'string', 'unique:artists'],
-                'NIN_front_image' => ['required', 'image', 'max:1024'],
-                'NIN_back_image' => ['required', 'image', 'max:1024'],
+                'business_registration' => ['required', 'string', 'unique:organizers'],
+                'business_registration_doc' => ['required', 'file', 'max:1024'],
                 'bio' => ['required', 'string'],
                 'profile_photo' => ['required', 'image', 'max:1024'],
                 'terms' => ['required', 'accepted'],
@@ -128,39 +109,36 @@ new #[Layout('components.layouts.auth')] class extends Component {
             // Store email in a variable to ensure it's not mixed up
             $userEmail = $this->email;
 
-            // Create user with exact email
+            // Create user
             $user = User::create([
                 'name' => $this->name,
-                'email' => $userEmail, // Use the stored email variable
+                'email' => $userEmail,
                 'password' => Hash::make($this->password),
             ]);
 
             // Handle file uploads
-            $ninFrontPath = $this->NIN_front_image->store('nin-images', 'public');
-            $ninBackPath = $this->NIN_back_image->store('nin-images', 'public');
+            $businessRegPath = $this->business_registration_doc->store('business-docs', 'public');
             $profilePhotoPath = $this->profile_photo->store('profile-photos', 'public');
 
-            // Create artist record
-            Artist::create([
+            // Create organizer record
+            Organizer::create([
                 'user_id' => $user->id,
-                'stage_name' => $this->stage_name,
-                'gender' => $this->gender,
-                'nationality' => $this->nationality,
+                'organization_name' => $this->organization_name,
+                'organization_type' => $this->organization_type,
+                'phone_number' => $this->phone_number,
                 'address' => $this->address,
-                'NIN_number' => $this->NIN_number,
-                'NIN_front_image' => $ninFrontPath,
-                'NIN_back_image' => $ninBackPath,
+                'business_registration' => $this->business_registration,
+                'business_registration_doc' => $businessRegPath,
                 'bio' => $this->bio,
                 'profile_photo' => $profilePhotoPath,
-                'social_media_link' => json_encode($this->social_media_links),
-                'music_links' => json_encode($this->music_links),
+                'social_media_links' => json_encode($this->social_media_links),
             ]);
 
             event(new Registered($user));
             Auth::login($user);
 
-            // Redirect to artist dashboard
-            $this->redirect(route('artist.dashboard'), navigate: true);
+            // Redirect to organizer dashboard
+            $this->redirect(route('organizer.dashboard'), navigate: true);
         } catch (\Exception $e) {
             session()->flash('error', 'Registration failed: ' . $e->getMessage());
         }
@@ -189,12 +167,12 @@ new #[Layout('components.layouts.auth')] class extends Component {
         <div class="flex items-center justify-center gap-8 mb-8">
             <div class="flex flex-col items-center">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold {{ $step >= 1 ? 'bg-[#b6c47a] text-white' : 'bg-[#e2d9b0] text-[#8ca34b]' }}">✔</div>
-                <span class="mt-2 font-semibold {{ $step === 1 ? 'text-[#8ca34b]' : 'text-[#6b6b4e]' }}">Personal Information</span>
+                <span class="mt-2 font-semibold {{ $step === 1 ? 'text-[#8ca34b]' : 'text-[#6b6b4e]' }}">Organization Info</span>
             </div>
             <div class="w-12 h-1 bg-[#b6c47a]"></div>
             <div class="flex flex-col items-center">
                 <div class="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold {{ $step >= 2 ? 'bg-[#b6c47a] text-white' : 'bg-[#e2d9b0] text-[#8ca34b]' }}">🎵</div>
-                <span class="mt-2 font-semibold {{ $step === 2 ? 'text-[#8ca34b]' : 'text-[#6b6b4e]' }}">Artist Details</span>
+                <span class="mt-2 font-semibold {{ $step === 2 ? 'text-[#8ca34b]' : 'text-[#6b6b4e]' }}">Profile Details</span>
             </div>
             <div class="w-12 h-1 bg-[#b6c47a]"></div>
             <div class="flex flex-col items-center">
@@ -211,34 +189,34 @@ new #[Layout('components.layouts.auth')] class extends Component {
                         class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
                     <label for="email">Email</label>
                     <input wire:model="email" type="email" placeholder="Email" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
-                    <label for="stage_name">Stage Name</label>
-                    <input wire:model="stage_name" type="text" placeholder="Stage Name" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />        
-                    <label for="gender" class="block mb-1 font-medium text-gray-700">Gender</label>
-                    <!-- <label for="gender" class="block mb-1 font-medium text-gray-700">Gender</label> -->
-                        <select id="gender" wire:model="gender" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80 w-full">
-                            <option value="">-- Select --</option>
-                            <option value="M">Male</option>
-                            <option value="F">Female</option>
+                    <label for="organization_name">Organization Name</label>
+                    <input wire:model="organization_name" type="text" placeholder="Organization Name" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
+                    <label for="organization_type">Organization Type</label>
+                    <select wire:model="organization_type" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80">
+                        <option value="">Select Type</option>
+                        <option value="Event Company">Event Company</option>
+                        <option value="Venue">Venue</option>
+                        <option value="Promoter">Promoter</option>
+                        <option value="Festival Organizer">Festival Organizer</option>
+                        <option value="Other">Other</option>
                         </select>
-                    <label for="nationality">Nationality</label>
-                    <input wire:model="nationality" type="text" placeholder="Nationality" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
+                    <label for="phone_number">Phone Number</label>
+                    <input wire:model="phone_number" type="tel" placeholder="Phone Number" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
                     <label for="address">Address</label>
                     <input wire:model="address" type="text" placeholder="Address" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80 md:col-span-2" />
-                    <label for="NIN_number">NIN Number</label>
-                    <input wire:model="NIN_number" type="text" placeholder="NIN Number" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
-                    <label for="NIN_front_image">NIN Front Image</label>
-                    <input wire:model="NIN_front_image" type="file" class="rounded-lg border border-gray-300 px-4 py-2 w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
-                    <label for="NIN_back_image">NIN Back Image</label>
-                    <input wire:model="NIN_back_image" type="file" class="rounded-lg border border-gray-300 px-4 py-2 w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
+                    <label for="business_registration">Business Registration Number</label>
+                    <input wire:model="business_registration" type="text" placeholder="Business Registration Number" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
+                    <label for="business_registration_doc">Business Registration Document</label>
+                    <input wire:model="business_registration_doc" type="file" class="rounded-lg border border-gray-300 px-4 py-2 w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
                 </div>
             @elseif ($step === 2)
                 <div class="space-y-4">
                     <label for="bio">Bio</label>
-                    <textarea wire:model="bio" placeholder="Bio (Organisation journey)" rows="3" class="rounded-lg border border-gray-300 px-4 py-2 w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80"></textarea>
+                    <textarea wire:model="bio" placeholder="Tell us about your organization" rows="3" class="rounded-lg border border-gray-300 px-4 py-2 w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80"></textarea>
                     <label for="profile_photo">Profile Photo</label>
                     <input wire:model="profile_photo" type="file" class="rounded-lg border border-gray-300 px-4 py-2 w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
                     
-                    <label for="social_media_link">Social Media Links</label>
+                    <label for="social_media_links">Social Media Links</label>
                     <button type="button" wire:click="addSocialMediaLink" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-semibold transition">Add Link</button>
                     @foreach($social_media_links as $index => $link)
                     <div class="flex items-center gap-2 mb-2">
@@ -247,30 +225,12 @@ new #[Layout('components.layouts.auth')] class extends Component {
                                 <option value="Facebook">Facebook</option>
                                 <option value="Twitter">Twitter</option>
                                 <option value="Instagram">Instagram</option>
-                                <option value="Youtube">Youtube</option>
-                                <option value="Tiktok">Tiktok</option>
+                            <option value="LinkedIn">LinkedIn</option>
                                 <option value="Website">Website</option>
                                 <option value="Other">Other</option>
                         </select>
                             <input type="text" wire:model="social_media_links.{{ $index }}.url" class="flex-1 border border-[#e2d9b0] rounded px-2 py-1 bg-[#f8f3d4] text-[#6b6b4e]" placeholder="Link" />
                             <button type="button" wire:click="removeSocialMediaLink({{ $index }})" class="bg-[#e2d9b0] text-[#b85c5c] rounded px-3 py-1">✕</button>
-                    </div>
-                    @endforeach
-                    
-                    <label for="music_links">Music Links</label>
-                    <button type="button" wire:click="addMusicLink" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-semibold transition">Add Link</button>
-                    @foreach($music_links as $index => $link)
-                    <div class="flex items-center gap-2 mb-2">
-                            <select wire:model="music_links.{{ $index }}.platform" class="border border-[#e2d9b0] rounded px-2 py-1 bg-[#f8f3d4] text-[#6b6b4e]">
-                                <option value="">Select</option>
-                                <option value="Soundcloud">Soundcloud</option>
-                                <option value="Spotify">Spotify</option>
-                                <option value="Apple Music">Apple Music</option>
-                                <option value="Youtube Music">Youtube Music</option>
-                                <option value="Other">Other</option>
-                        </select>
-                            <input type="text" wire:model="music_links.{{ $index }}.url" class="flex-1 border border-[#e2d9b0] rounded px-2 py-1 bg-[#f8f3d4] text-[#6b6b4e]" placeholder="Link" />
-                            <button type="button" wire:click="removeMusicLink({{ $index }})" class="bg-[#e2d9b0] text-[#b85c5c] rounded px-3 py-1">✕</button>
                     </div>
                     @endforeach
                 </div>

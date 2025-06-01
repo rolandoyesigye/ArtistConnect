@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Artist;
 
 class ArtistController extends Controller
 {
@@ -27,6 +28,18 @@ class ArtistController extends Controller
             ->whereYear('date', now()->year)
             ->count();
 
-        return view('artist.dashboard', compact('likes', 'followers', 'bookings'));
+        // Get user email
+        $email = $user->email;
+
+        return view('artist.dashboard', compact('likes', 'followers', 'bookings', 'email'));
+    }
+
+    public function profile($id)
+    {
+        $artist = Artist::with(['music', 'upcomingEvents'])
+            ->withCount(['likes', 'followers', 'bookings'])
+            ->findOrFail($id);
+
+        return view('artist.profile', compact('artist'));
     }
 } 

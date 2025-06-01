@@ -6,29 +6,32 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::create('artists', function (Blueprint $table) {
+        Schema::create('organizers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('email');
-            $table->string('stage_name');
-            $table->string('gender');
-            $table->string('nationality');
+            $table->string('organization_name');
+            $table->string('organization_type');
+            $table->string('phone_number');
             $table->text('address');
-            $table->string('NIN_number')->unique();
-            $table->string('NIN_front_image');
-            $table->string('NIN_back_image');
+            $table->string('business_registration')->unique();
+            $table->string('business_registration_doc');
             $table->text('bio');
             $table->string('profile_photo');
-            $table->text('social_media_link')->nullable();
-            $table->text('music_links')->nullable();
+            $table->json('social_media_links')->nullable();
             $table->timestamps();
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
-        Schema::dropIfExists('artists');
+        Schema::dropIfExists('organizers');
     }
-}; 
+};

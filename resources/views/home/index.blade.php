@@ -74,9 +74,9 @@
         </div>
         <h3 class="text-lg font-semibold">Organizer</h3>
         <p class="text-sm text-gray-400">Create & manage live events</p>
-        <button class="bg-indigo-600 hover:bg-indigo-700 transition px-6 py-2 rounded-full text-white font-medium">
+        <a href="{{ route('organizer.register') }}" class="bg-indigo-600 hover:bg-indigo-700 transition px-6 py-2 rounded-full text-white font-medium block text-center">
           Join as Organizer
-        </button>
+        </a>
       </div>
 
       <!-- Venue Card -->
@@ -248,18 +248,20 @@
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
       @forelse($artists as $artist)
         <!-- Artist Card -->
-        <div>
-          <div class="w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-indigo-600 mb-4">
-            <img src="{{ Storage::url($artist->profile_photo) }}" 
-                 alt="{{ $artist->stage_name }}" 
-                 class="w-full h-full object-cover">
+        <a href="{{ route('artist.profile', $artist->id) }}" class="group">
+          <div>
+            <div class="w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-indigo-600 mb-4 group-hover:border-[#8ca34b] transition">
+              <img src="{{ Storage::url($artist->profile_photo) }}" 
+                   alt="{{ $artist->stage_name }}" 
+                   class="w-full h-full object-cover">
+            </div>
+            <h3 class="text-md font-semibold text-gray-800 group-hover:text-[#8ca34b] transition">{{ $artist->stage_name }}</h3>
+            <p class="text-sm text-gray-500 leading-tight">
+              {{ Str::limit($artist->bio, 30) }}<br>
+              {{ $artist->nationality }}
+            </p>
           </div>
-          <h3 class="text-md font-semibold text-gray-800">{{ $artist->stage_name }}</h3>
-          <p class="text-sm text-gray-500 leading-tight">
-            {{ Str::limit($artist->bio, 30) }}<br>
-            {{ $artist->nationality }}
-          </p>
-        </div>
+        </a>
       @empty
         <div class="col-span-4 text-center py-8">
           <p class="text-gray-500">No artists found</p>

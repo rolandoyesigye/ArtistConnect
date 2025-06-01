@@ -39,13 +39,10 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
 
     /**
      * Get the user's initials
@@ -64,5 +61,13 @@ class User extends Authenticatable
     public function artist()
     {
         return $this->hasOne(Artist::class);
+    }
+
+    /**
+     * Get the organizer associated with the user.
+     */
+    public function organizer()
+    {
+        return $this->hasOne(Organizer::class);
     }
 }
