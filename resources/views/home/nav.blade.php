@@ -28,14 +28,18 @@
       </button>
 
       <!-- Log In -->
-      <button class="text-white hover:underline">
-        Log in
-      </button>
+      @if (Route::has('login'))
+            <a href="{{ route('login') }}" class="text-white hover:underline">
+                Log in
+            </a>
+        @endif
 
       <!-- Register -->
-      <button class="bg-[#94a94f] hover:bg-[#7f9242] text-white font-bold px-4 py-1.5 rounded-md shadow transition">
-        Register
-      </button>
+      @if (Route::has('register'))
+            <a href="{{ route('register') }}" class="text-white hover:underline">
+                Register
+            </a>
+        @endif
     </div>
 
   </div>

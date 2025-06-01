@@ -57,4 +57,12 @@ class User extends Authenticatable
             ->map(fn (string $name) => Str::of($name)->substr(0, 1))
             ->implode('');
     }
+
+    /**
+     * Get the artist associated with the user.
+     */
+    public function artist()
+    {
+        return $this->hasOne(Artist::class);
+    }
 }

@@ -60,9 +60,9 @@
         </div>
         <h3 class="text-lg font-semibold">Artist</h3>
         <p class="text-sm text-gray-400">Share your music & connect with fans</p>
-        <button class="bg-indigo-600 hover:bg-indigo-700 transition px-6 py-2 rounded-full text-white font-medium">
+        <a href="{{ route('artist.register') }}" class="bg-indigo-600 hover:bg-indigo-700 transition px-6 py-2 rounded-full text-white font-medium block text-center">
           Join as Artist
-        </button>
+        </a>
       </div>
 
       <!-- Organizer Card -->
@@ -246,41 +246,25 @@
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-      <!-- Artist Card -->
-      <div>
-        <div class="w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-indigo-600 mb-4">
-          <img src="https://via.placeholder.com/150" alt="Artist 1" class="w-full h-full object-cover">
+      @forelse($artists as $artist)
+        <!-- Artist Card -->
+        <div>
+          <div class="w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-indigo-600 mb-4">
+            <img src="{{ Storage::url($artist->profile_photo) }}" 
+                 alt="{{ $artist->stage_name }}" 
+                 class="w-full h-full object-cover">
+          </div>
+          <h3 class="text-md font-semibold text-gray-800">{{ $artist->stage_name }}</h3>
+          <p class="text-sm text-gray-500 leading-tight">
+            {{ Str::limit($artist->bio, 30) }}<br>
+            {{ $artist->nationality }}
+          </p>
         </div>
-        <h3 class="text-md font-semibold text-gray-800">Oye</h3>
-        <p class="text-sm text-gray-500 leading-tight">Nobis quam odit offi,<br>Uganda</p>
-      </div>
-
-      <!-- Artist Card -->
-      <div>
-        <div class="w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-indigo-600 mb-4">
-          <img src="https://via.placeholder.com/150" alt="Artist 2" class="w-full h-full object-cover">
+      @empty
+        <div class="col-span-4 text-center py-8">
+          <p class="text-gray-500">No artists found</p>
         </div>
-        <h3 class="text-md font-semibold text-gray-800">Basil Goodwin</h3>
-        <p class="text-sm text-gray-500 leading-tight">Molestias quia labor,<br>Et dolor excepteur v</p>
-      </div>
-
-      <!-- Artist Card -->
-      <div>
-        <div class="w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-indigo-600 mb-4">
-          <img src="https://via.placeholder.com/150" alt="Artist 3" class="w-full h-full object-cover">
-        </div>
-        <h3 class="text-md font-semibold text-gray-800">Demetrius Scott</h3>
-        <p class="text-sm text-gray-500 leading-tight">Ut excepteur volupta,<br>Magnam numquam eiusm</p>
-      </div>
-
-      <!-- Artist Card -->
-      <div>
-        <div class="w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-indigo-600 mb-4">
-          <img src="https://via.placeholder.com/150" alt="Artist 4" class="w-full h-full object-cover">
-        </div>
-        <h3 class="text-md font-semibold text-gray-800">Vernon Hardin</h3>
-        <p class="text-sm text-gray-500 leading-tight">Deserunt cumque vel,<br>Assumenda repellendu</p>
-      </div>
+      @endforelse
     </div>
   </div>
 </section>

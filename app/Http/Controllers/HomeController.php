@@ -9,6 +9,11 @@ class HomeController extends Controller
 {
     public function index()
     {
-        return view('home.index');
+        $artists = \App\Models\Artist::with('user')
+            ->latest()
+            ->take(4)
+            ->get();
+
+        return view('home.index', compact('artists'));
     }
 }
