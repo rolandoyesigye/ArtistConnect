@@ -51,13 +51,16 @@ new #[Layout('components.layouts.auth')] class extends Component {
         if ($this->step === 1) {
             $this->validate([
                 'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
                 'organization_name' => ['required', 'string', 'max:255'],
                 'organization_type' => ['required', 'string'],
                 'phone_number' => ['required', 'string'],
                 'address' => ['required', 'string'],
                 'business_registration' => ['required', 'string', 'unique:organizers'],
                 'business_registration_doc' => ['required', 'file', 'max:1024'],
+            ], [
+                'email.email' => 'Please enter a valid email address.',
+                'email.unique' => 'This email is already registered.'
             ]);
         } elseif ($this->step === 2) {
             $this->validate([
@@ -93,7 +96,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
             // Validate all steps
             $this->validate([
                 'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
                 'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
                 'organization_name' => ['required', 'string', 'max:255'],
                 'organization_type' => ['required', 'string'],
@@ -104,10 +107,13 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 'bio' => ['required', 'string'],
                 'profile_photo' => ['required', 'image', 'max:1024'],
                 'terms' => ['required', 'accepted'],
+            ], [
+                'email.email' => 'Please enter a valid email address.',
+                'email.unique' => 'This email is already registered.'
             ]);
 
             // Store email in a variable to ensure it's not mixed up
-            $userEmail = $this->email;
+            $userEmail = trim($this->email);
 
             // Create user
             $user = User::create([
@@ -115,6 +121,9 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 'email' => $userEmail,
                 'password' => Hash::make($this->password),
             ]);
+
+            // Assign organizer role
+            $user->assignRole('organizer');
 
             // Handle file uploads
             $businessRegPath = $this->business_registration_doc->store('business-docs', 'public');
@@ -188,7 +197,14 @@ new #[Layout('components.layouts.auth')] class extends Component {
                     <input wire:model="name" type="text" id="name" placeholder="Name"
                         class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
                     <label for="email">Email</label>
-                    <input wire:model="email" type="email" placeholder="Email" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
+                    <input 
+                        wire:model.live="email" 
+                        type="email" 
+                        id="email"
+                        name="email"
+                        placeholder="Email" 
+                        class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" 
+                    />
                     <label for="organization_name">Organization Name</label>
                     <input wire:model="organization_name" type="text" placeholder="Organization Name" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
                     <label for="organization_type">Organization Type</label>

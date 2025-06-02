@@ -65,7 +65,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
         if ($this->step === 1) {
             $this->validate([
                 'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
                 'stage_name' => ['required', 'string', 'max:255'],
                 'gender' => ['required', 'string'],
                 'nationality' => ['required', 'string'],
@@ -73,6 +73,9 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 'NIN_number' => ['required', 'string', 'unique:artists'],
                 'NIN_front_image' => ['required', 'image', 'max:1024'],
                 'NIN_back_image' => ['required', 'image', 'max:1024'],
+            ], [
+                'email.email' => 'Please enter a valid email address.',
+                'email.unique' => 'This email is already registered.'
             ]);
         } elseif ($this->step === 2) {
             $this->validate([
@@ -108,10 +111,16 @@ new #[Layout('components.layouts.auth')] class extends Component {
     public function register(): void
     {
         try {
+            // Add these debug lines
+            \Log::info('Registration attempt', [
+                'email' => $this->email,
+                'password' => $this->password
+            ]);
+
             // Validate all steps
             $this->validate([
                 'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
                 'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
                 'stage_name' => ['required', 'string', 'max:255'],
                 'gender' => ['required', 'string'],
@@ -123,17 +132,23 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 'bio' => ['required', 'string'],
                 'profile_photo' => ['required', 'image', 'max:1024'],
                 'terms' => ['required', 'accepted'],
+            ], [
+                'email.email' => 'Please enter a valid email address.',
+                'email.unique' => 'This email is already registered.'
             ]);
 
             // Store email in a variable to ensure it's not mixed up
-            $userEmail = $this->email;
+            $userEmail = trim($this->email);
 
             // Create user with exact email
             $user = User::create([
                 'name' => $this->name,
-                'email' => $userEmail, // Use the stored email variable
+                'email' => $userEmail,
                 'password' => Hash::make($this->password),
             ]);
+
+            // Assign artist role
+            $user->assignRole('artist');
 
             // Handle file uploads
             $ninFrontPath = $this->NIN_front_image->store('nin-images', 'public');
@@ -143,6 +158,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
             // Create artist record
             Artist::create([
                 'user_id' => $user->id,
+                'email' => $userEmail,
                 'stage_name' => $this->stage_name,
                 'gender' => $this->gender,
                 'nationality' => $this->nationality,
@@ -162,7 +178,11 @@ new #[Layout('components.layouts.auth')] class extends Component {
             // Redirect to artist dashboard
             $this->redirect(route('artist.dashboard'), navigate: true);
         } catch (\Exception $e) {
-            session()->flash('error', 'Registration failed: ' . $e->getMessage());
+            if (str_contains($e->getMessage(), 'email')) {
+                session()->flash('error', 'Email is already registered or invalid.');
+            } else {
+                session()->flash('error', 'Registration failed: ' . $e->getMessage());
+            }
         }
     }
 }; ?>
@@ -210,7 +230,14 @@ new #[Layout('components.layouts.auth')] class extends Component {
                     <input wire:model="name" type="text" id="name" placeholder="Name"
                         class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
                     <label for="email">Email</label>
-                    <input wire:model="email" type="email" placeholder="Email" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />
+                    <input 
+                        wire:model.live="email" 
+                        type="email" 
+                        id="email"
+                        name="email"
+                        placeholder="Email" 
+                        class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" 
+                    />
                     <label for="stage_name">Stage Name</label>
                     <input wire:model="stage_name" type="text" placeholder="Stage Name" class="rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white/80" />        
                     <label for="gender" class="block mb-1 font-medium text-gray-700">Gender</label>

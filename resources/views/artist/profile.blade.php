@@ -72,11 +72,11 @@
 
                             <!-- Action Buttons -->
                             <div class="mt-4 md:mt-0 flex space-x-4">
-                                <button class="bg-[#8ca34b] text-white px-6 py-2 rounded-full hover:bg-[#7a8f3d] transition">
+                                <button class="border border-[#8ca34b] text-[#8ca34b] px-6 py-2 rounded-full hover:bg-[#8ca34b] hover:text-white transition">
                                     Follow
                                 </button>
                                 <button class="border border-[#8ca34b] text-[#8ca34b] px-6 py-2 rounded-full hover:bg-[#8ca34b] hover:text-white transition">
-                                    Message
+                                    Like
                                 </button>
                             </div>
                         </div>
