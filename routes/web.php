@@ -23,7 +23,7 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 });
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 // Artist routes
 Volt::route('artist/register', 'artist.auth.register')->name('artist.register');
@@ -41,6 +41,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/organizer/dashboard', function () {
         return view('organizer.dashboard');
     })->name('organizer.dashboard');
+
+    // Event routes
+    Volt::route('organizer/events/create', 'organizer.events.create')->name('organizer.events.create');
 });
 
 require __DIR__.'/auth.php';

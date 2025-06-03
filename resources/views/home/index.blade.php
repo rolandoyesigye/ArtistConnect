@@ -161,73 +161,34 @@
 
     <!-- Concert Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <!-- Card -->
-      <div class="rounded-xl border shadow-sm overflow-hidden">
-        <div class="relative h-40 bg-gradient-to-b from-transparent to-black">
-          <img src="https://via.placeholder.com/400x200" alt="concert" class="absolute inset-0 w-full h-full object-cover">
-          <span class="absolute top-2 right-2 bg-indigo-500 text-white text-xs px-2 py-1 rounded">Pop</span>
-          <div class="absolute bottom-2 left-2 text-white font-mono text-sm">May 15, 2025</div>
-        </div>
-        <div class="p-4">
-          <h3 class="text-lg font-semibold text-gray-700">The Weeknd</h3>
-          <p class="text-sm text-gray-500">Madison Square Garden • New York, NY</p>
-          <div class="flex items-center justify-between mt-4">
-            <span class="text-indigo-600 font-mono">$89.00</span>
-            <button class="bg-indigo-600 text-white px-4 py-1 rounded-full text-sm">Get Tickets</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Repeat the above card and change content -->
-      <div class="rounded-xl border shadow-sm overflow-hidden">
-        <div class="relative h-40 bg-gradient-to-b from-transparent to-black">
-          <img src="https://via.placeholder.com/400x200" alt="concert" class="absolute inset-0 w-full h-full object-cover">
-          <span class="absolute top-2 right-2 bg-indigo-500 text-white text-xs px-2 py-1 rounded">Pop</span>
-          <div class="absolute bottom-2 left-2 text-white font-mono text-sm">May 20, 2025</div>
-        </div>
-        <div class="p-4">
-          <h3 class="text-lg font-semibold text-gray-700">Dua Lipa</h3>
-          <p class="text-sm text-gray-500">The Forum • Los Angeles, CA</p>
-          <div class="flex items-center justify-between mt-4">
-            <span class="text-indigo-600 font-mono">$75.00</span>
-            <button class="bg-indigo-600 text-white px-4 py-1 rounded-full text-sm">Get Tickets</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Kendrick Lamar -->
-      <div class="rounded-xl border shadow-sm overflow-hidden">
-        <div class="relative h-40 bg-gradient-to-b from-transparent to-black">
-          <img src="https://via.placeholder.com/400x200" alt="concert" class="absolute inset-0 w-full h-full object-cover">
-          <span class="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">Hip-Hop</span>
-          <div class="absolute bottom-2 left-2 text-white font-mono text-sm">May 23, 2025</div>
-        </div>
-        <div class="p-4">
-          <h3 class="text-lg font-semibold text-gray-700">Kendrick Lamar</h3>
-          <p class="text-sm text-gray-500">United Center • Chicago, IL</p>
-          <div class="flex items-center justify-between mt-4">
-            <span class="text-indigo-600 font-mono">$95.00</span>
-            <button class="bg-indigo-600 text-white px-4 py-1 rounded-full text-sm">Get Tickets</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Billie Eilish -->
-      <div class="rounded-xl border shadow-sm overflow-hidden">
-        <div class="relative h-40 bg-gradient-to-b from-transparent to-black">
-          <img src="https://via.placeholder.com/400x200" alt="concert" class="absolute inset-0 w-full h-full object-cover">
-          <span class="absolute top-2 right-2 bg-indigo-500 text-white text-xs px-2 py-1 rounded">Pop</span>
-          <div class="absolute bottom-2 left-2 text-white font-mono text-sm">May 28, 2025</div>
-        </div>
-        <div class="p-4">
-          <h3 class="text-lg font-semibold text-gray-700">Billie Eilish</h3>
-          <p class="text-sm text-gray-500">TD Garden • Boston, MA</p>
-          <div class="flex items-center justify-between mt-4">
-            <span class="text-indigo-600 font-mono">$85.00</span>
-            <button class="bg-indigo-600 text-white px-4 py-1 rounded-full text-sm">Get Tickets</button>
-          </div>
-        </div>
-      </div>
+        @forelse($events as $event)
+            <div class="rounded-xl border shadow-sm overflow-hidden bg-white">
+                <div class="relative h-40 bg-gradient-to-b from-transparent to-black">
+                    <img src="{{ Storage::url($event->image) }}" alt="{{ $event->title }}" class="absolute inset-0 w-full h-full object-cover">
+                    <div class="absolute bottom-2 left-2 text-white font-mono text-sm">{{ $event->date->format('F j, Y g:i A') }}</div>
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-medium text-gray-700">{{ $event->title }}</h3>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full 
+                            @if($event->status === 'draft') bg-yellow-100 text-yellow-800
+                            @elseif($event->status === 'published') bg-green-100 text-green-800
+                            @else bg-red-100 text-red-800 @endif">
+                            {{ ucfirst($event->status) }}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">{{ $event->venue }}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-indigo-600 font-mono">UGX {{ number_format($event->budget, 0) }}</span>
+                        <a href="#" class="bg-indigo-600 text-white px-4 py-1 rounded-full text-sm hover:bg-indigo-700 transition">Get Tickets</a>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="col-span-full text-center py-8">
+                <p class="text-gray-500">No upcoming events available at the moment.</p>
+            </div>
+        @endforelse
     </div>
 
     <!-- Load More Button -->
