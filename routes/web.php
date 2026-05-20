@@ -27,7 +27,7 @@ Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('ho
 
 // Artist routes
 Volt::route('artist/register', 'artist.auth.register')->name('artist.register');
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:artist'])->group(function () {
     Route::get('/artist/dashboard', function () {
         return view('artist.dashboard');
     })->name('artist.dashboard');
@@ -37,7 +37,7 @@ Route::get('/artist/{id}', [ArtistController::class, 'profile'])->name('artist.p
 
 // Organizer routes
 Volt::route('organizer/register', 'organizer.auth.register')->name('organizer.register');
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:organizer'])->group(function () {
     Route::get('/organizer/dashboard', function () {
         return view('organizer.dashboard');
     })->name('organizer.dashboard');

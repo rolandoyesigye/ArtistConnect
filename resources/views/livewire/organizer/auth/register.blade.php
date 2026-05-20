@@ -32,6 +32,16 @@ new #[Layout('components.layouts.auth')] class extends Component {
 
     public function mount()
     {
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user->hasRole('organizer')) {
+                $this->redirect(route('organizer.dashboard'), navigate: true);
+                return;
+            }
+            $this->name = $user->name;
+            $this->email = $user->email;
+        }
+
         $this->social_media_links = [['platform' => '', 'url' => '']];
     }
 
@@ -93,11 +103,9 @@ new #[Layout('components.layouts.auth')] class extends Component {
     public function register(): void
     {
         try {
-            // Validate all steps
-            $this->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-                'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
+            $isLoggedIn = Auth::check();
+
+            $organizerRules = [
                 'organization_name' => ['required', 'string', 'max:255'],
                 'organization_type' => ['required', 'string'],
                 'phone_number' => ['required', 'string'],
@@ -107,29 +115,33 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 'bio' => ['required', 'string'],
                 'profile_photo' => ['required', 'image', 'max:1024'],
                 'terms' => ['required', 'accepted'],
-            ], [
-                'email.email' => 'Please enter a valid email address.',
-                'email.unique' => 'This email is already registered.'
-            ]);
+            ];
 
-            // Store email in a variable to ensure it's not mixed up
-            $userEmail = trim($this->email);
+            if ($isLoggedIn) {
+                $this->validate($organizerRules);
+                $user = Auth::user();
+            } else {
+                $this->validate(array_merge([
+                    'name' => ['required', 'string', 'max:255'],
+                    'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+                    'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
+                ], $organizerRules), [
+                    'email.email' => 'Please enter a valid email address.',
+                    'email.unique' => 'This email is already registered.'
+                ]);
 
-            // Create user
-            $user = User::create([
-                'name' => $this->name,
-                'email' => $userEmail,
-                'password' => Hash::make($this->password),
-            ]);
+                $user = User::create([
+                    'name' => $this->name,
+                    'email' => trim($this->email),
+                    'password' => Hash::make($this->password),
+                ]);
+            }
 
-            // Assign organizer role
             $user->assignRole('organizer');
 
-            // Handle file uploads
             $businessRegPath = $this->business_registration_doc->store('business-docs', 'public');
             $profilePhotoPath = $this->profile_photo->store('profile-photos', 'public');
 
-            // Create organizer record
             Organizer::create([
                 'user_id' => $user->id,
                 'organization_name' => $this->organization_name,
@@ -143,11 +155,14 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 'social_media_links' => json_encode($this->social_media_links),
             ]);
 
-            event(new Registered($user));
-            Auth::login($user);
+            if (! $isLoggedIn) {
+                event(new Registered($user));
+                Auth::login($user);
+            }
 
-            // Redirect to organizer dashboard
             $this->redirect(route('organizer.dashboard'), navigate: true);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             session()->flash('error', 'Registration failed: ' . $e->getMessage());
         }

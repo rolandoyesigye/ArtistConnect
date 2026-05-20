@@ -34,6 +34,16 @@ new #[Layout('components.layouts.auth')] class extends Component {
 
     public function mount()
     {
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user->hasRole('artist')) {
+                $this->redirect(route('artist.dashboard'), navigate: true);
+                return;
+            }
+            $this->name = $user->name;
+            $this->email = $user->email;
+        }
+
         $this->social_media_links = [['platform' => '', 'url' => '']];
         $this->music_links = [['platform' => '', 'url' => '']];
     }
@@ -111,17 +121,9 @@ new #[Layout('components.layouts.auth')] class extends Component {
     public function register(): void
     {
         try {
-            // Add these debug lines
-            \Log::info('Registration attempt', [
-                'email' => $this->email,
-                'password' => $this->password
-            ]);
+            $isLoggedIn = Auth::check();
 
-            // Validate all steps
-            $this->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-                'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
+            $artistRules = [
                 'stage_name' => ['required', 'string', 'max:255'],
                 'gender' => ['required', 'string'],
                 'nationality' => ['required', 'string'],
@@ -132,30 +134,36 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 'bio' => ['required', 'string'],
                 'profile_photo' => ['required', 'image', 'max:1024'],
                 'terms' => ['required', 'accepted'],
-            ], [
-                'email.email' => 'Please enter a valid email address.',
-                'email.unique' => 'This email is already registered.'
-            ]);
+            ];
 
-            // Store email in a variable to ensure it's not mixed up
-            $userEmail = trim($this->email);
+            if ($isLoggedIn) {
+                $this->validate($artistRules);
+                $user = Auth::user();
+                $userEmail = $user->email;
+            } else {
+                $this->validate(array_merge([
+                    'name' => ['required', 'string', 'max:255'],
+                    'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+                    'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
+                ], $artistRules), [
+                    'email.email' => 'Please enter a valid email address.',
+                    'email.unique' => 'This email is already registered.'
+                ]);
 
-            // Create user with exact email
-            $user = User::create([
-                'name' => $this->name,
-                'email' => $userEmail,
-                'password' => Hash::make($this->password),
-            ]);
+                $userEmail = trim($this->email);
+                $user = User::create([
+                    'name' => $this->name,
+                    'email' => $userEmail,
+                    'password' => Hash::make($this->password),
+                ]);
+            }
 
-            // Assign artist role
             $user->assignRole('artist');
 
-            // Handle file uploads
             $ninFrontPath = $this->NIN_front_image->store('nin-images', 'public');
             $ninBackPath = $this->NIN_back_image->store('nin-images', 'public');
             $profilePhotoPath = $this->profile_photo->store('profile-photos', 'public');
 
-            // Create artist record
             Artist::create([
                 'user_id' => $user->id,
                 'email' => $userEmail,
@@ -172,17 +180,16 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 'music_links' => json_encode($this->music_links),
             ]);
 
-            event(new Registered($user));
-            Auth::login($user);
-
-            // Redirect to artist dashboard
-            $this->redirect(route('artist.dashboard'), navigate: true);
-        } catch (\Exception $e) {
-            if (str_contains($e->getMessage(), 'email')) {
-                session()->flash('error', 'Email is already registered or invalid.');
-            } else {
-                session()->flash('error', 'Registration failed: ' . $e->getMessage());
+            if (! $isLoggedIn) {
+                event(new Registered($user));
+                Auth::login($user);
             }
+
+            $this->redirect(route('artist.dashboard'), navigate: true);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            session()->flash('error', 'Registration failed: ' . $e->getMessage());
         }
     }
 }; ?>
