@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Event extends Model
 {
@@ -24,6 +26,13 @@ class Event extends Model
         'date' => 'datetime',
         'budget' => 'decimal:2',
     ];
+
+    public function getImageUrlAttribute(): string
+    {
+        return Str::startsWith($this->image, ['http://', 'https://'])
+            ? $this->image
+            : Storage::url($this->image);
+    }
 
     public function organizer()
     {

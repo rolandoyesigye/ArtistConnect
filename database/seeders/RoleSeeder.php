@@ -9,9 +9,8 @@ class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create roles
-        Role::create(['name' => 'artist']);
-        Role::create(['name' => 'organizer']);
-        Role::create(['name' => 'user']);
+        Role::findOrCreate('artist');
+        Role::findOrCreate('organizer');
+        Role::findOrCreate('user');
     }
 } 

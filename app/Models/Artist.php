@@ -4,10 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Artist extends Model
 {
     use HasFactory;
+
+    public function getProfilePhotoUrlAttribute(): string
+    {
+        return Str::startsWith($this->profile_photo, ['http://', 'https://'])
+            ? $this->profile_photo
+            : Storage::url($this->profile_photo);
+    }
 
     protected $fillable = [
         'user_id',
